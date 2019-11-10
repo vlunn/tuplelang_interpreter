@@ -12,7 +12,6 @@ reserved = {
 # List of token names:
 tokens = [
     'WHITESPACE',
-    'COMMENT',
     'LARROW',
     'RARROW',
     'LPAREN',
@@ -46,7 +45,6 @@ tokens = [
 ] + list(reserved.values())
 
 t_ignore = ' \t'        # Recognize whitespace as legal input, but ignore it
-t_COMMENT = '{.*}'      # TODO: what about chained, nested or multi-line comments?
 
 # Regular expressions for simple, one and two letter tokens:
 t_LARROW = r'<-'
@@ -99,6 +97,11 @@ def t_varIDENT(t):
         t.type = reserved[t.value]
 
     return t
+
+
+def t_COMMENT(t):
+    r'{.*}'
+    pass    # ignore comments
 
 
 t_constIDENT = r'[A-Z]+'
