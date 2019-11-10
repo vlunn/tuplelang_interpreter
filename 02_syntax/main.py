@@ -45,6 +45,12 @@ tokens = [
 
 t_ignore = ' \t'        # Recognize whitespace as legal input, but ignore it
 
+
+def t_COMMENT(t):
+    r'{.*}'
+    pass    # ignore comments
+
+
 # Regular expressions for simple, one and two letter tokens:
 t_LARROW = r'<-'
 t_RARROW = r'->'
@@ -96,11 +102,6 @@ def t_varIDENT(t):
         t.type = reserved[t.value]
 
     return t
-
-
-def t_COMMENT(t):
-    r'{.*}'
-    pass    # ignore comments
 
 
 t_constIDENT = r'[A-Z]+'
