@@ -2,15 +2,14 @@ from lexerutilities import lexer, tokens
 import ply.yacc as yacc
 
 
-# first definition is the target we want to reduce
-# in other words: after processing all input tokens, if this start-symbol
-# is the only one left, we do not have any syntax errors
 def p_minimum_program(p):
     '''program : return_value DOT'''
+    pass
 
 
 def p_program(p):
     '''program : func_or_var_def return_value DOT'''
+    pass
 
 
 def p_func_or_var_def(p):
@@ -26,23 +25,27 @@ def p_func_or_var_defs(p):
 
 
 def p_function_definition(p):
-    '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE BEGIN variable_definitions return_value DOT END DOT'''
-    print(p.slice[1])  # NB: slice attr gives BNF format (/possibly p.slice[1].type)
+    '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE \
+        BEGIN variable_definitions return_value DOT END DOT'''
+    print("func_definition( ** {} ** )".format(p[2]))
 
 
 def p_function_definition_args(p):
-    '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE BEGIN variable_definitions return_value DOT END DOT'''
-    print(p.slice[1])  # NB: slice attr gives BNF format (/possibly p.slice[1].type)
+    '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE \
+        BEGIN variable_definitions return_value DOT END DOT'''
+    print("func_definition( ** {} ** )".format(p[2]))
 
 
 def p_function_definition_minimum_body(p):
-    '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE BEGIN return_value DOT END DOT'''
-    print(p.slice[1])  # NB: slice attr gives BNF format (/possibly p.slice[1].type)
+    '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE \
+        BEGIN return_value DOT END DOT'''
+    print("func_definition( ** {} ** )".format(p[2]))
 
 
 def p_function_definition_args_minimum_body(p):
-    '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE BEGIN return_value DOT END DOT'''
-    print(p.slice[1])  # NB: slice attr gives BNF format (/possibly p.slice[1].type)
+    '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE \
+        BEGIN return_value DOT END DOT'''
+    print("func_definition( ** {} ** )".format(p[2]))
 
 
 def p_variable_definition(p):
@@ -57,10 +60,12 @@ def p_variable_definitions(p):
 
 def p_formal(p):
     '''formals : varIDENT'''
+    pass
 
 
 def p_formals(p):
     '''formals : varIDENT COMMA formals'''
+    pass
 
 
 def p_return_value(p):
@@ -69,17 +74,30 @@ def p_return_value(p):
     pass
 
 
-def p_var_def(p):
-    '''var_def : varIDENT LARROW simple_expression DOT
-                | constIDENT LARROW constant_expression DOT
-                | tupleIDENT LARROW tuple_expression DOT
-                | pipe_expression RARROW tupleIDENT DOT'''
-    print(p.slice[1])    # NB: slice attr gives BNF format (/possibly p.slice[1].type)
+def p_var_def_variable(p):
+    '''var_def : varIDENT LARROW simple_expression DOT'''
+    print("variable_definition( ** {} ** )".format(p.slice[1].value))
+
+
+def p_var_def_constant(p):
+    '''var_def : constIDENT LARROW constant_expression DOT'''
+    print("constant_definition( ** {} ** )".format(p.slice[1].value))
+
+
+def p_var_def_tuple(p):
+    '''var_def : tupleIDENT LARROW tuple_expression DOT'''
+    print("tuplevariable_definition( ** {} ** )".format(p.slice[1].value))
+
+
+def p_var_def_pipe_expr(p):
+    '''var_def : pipe_expression RARROW tupleIDENT DOT'''
+    print(p.slice[1])
 
 
 def p_constant_expression(p):
     '''constant_expression : constIDENT
                             | NUMBER_LITERAL'''
+    pass
 
 
 def p_pipe_expression(p):   # TODO: Check that recursion works.
@@ -136,12 +154,12 @@ def p_tuple_atom(p):
 
 def p_function_call_no_args(p):
     '''function_call : funcIDENT LSQUARE RSQUARE'''
-    pass
+    print("function_call( ** {} ** )".format(p.slice[1].value))
 
 
 def p_function_call(p):
     '''function_call : funcIDENT LSQUARE arguments RSQUARE'''
-    pass
+    print("function_call( ** {} ** )".format(p.slice[1].value))
 
 
 def p_argument(p):
@@ -154,30 +172,34 @@ def p_arguments(p):     # TODO: Check that works when multiple in chain
     pass
 
 
-def p_atom(p):
-    '''atom : function_call
-            | NUMBER_LITERAL
+def p_literal_atom(p):
+    '''atom : NUMBER_LITERAL
             | STRING_LITERAL
             | varIDENT
-            | constIDENT
+            | constIDENT'''
+    print("{}( ** {} ** )".format(p.slice[0], p.slice[1].value))
+
+
+def p_atom(p):
+    '''atom : function_call
             | LPAREN simple_expression RPAREN
             | SELECT COLON constant_expression LSQUARE tuple_expression RSQUARE'''
-    pass
+    print(p.slice[0])
 
 
 def p_factor(p):
     '''factor : atom'''
-    pass
+    print(p.slice[0])
 
 
 def p_factor_negative(p):
     '''factor : MINUS atom'''
-    pass
+    print(p.slice[0])
 
 
 def p_term(p):
     '''term : factor'''
-    pass
+    print(p.slice[0])
 
 
 def p_terms(p):
@@ -188,7 +210,7 @@ def p_terms(p):
 
 def p_simple_expression(p):
     '''simple_expression : term'''
-    pass
+    print(p.slice[0])
 
 
 def p_simple_expressions(p):
