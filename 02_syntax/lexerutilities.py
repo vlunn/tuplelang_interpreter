@@ -73,7 +73,7 @@ def t_NUMBER_LITERAL(t):
 
 
 def t_STRING_LITERAL(t):
-    r'".+"'      # TODO: Consider this: +The fa-12n021t <"==cat sat1".. ...""" <:o|n:! Eg. 2 string literals on same row
+    r'".+"'
     t.value = t.value[1:-1]
     return t
 
@@ -95,7 +95,7 @@ def t_COMMENT(t):
 
 t_constIDENT = r'[A-Z]+'
 t_tupleIDENT = r'<[a-z]+>'
-t_funcIDENT = r'[A-Z][a-z0-9_]+'    # Note: FFo is not valid - precisely one capital letter in the beginning.
+t_funcIDENT = r'[A-Z][a-z0-9_]+'
 
 
 # Keep track of line numbers:

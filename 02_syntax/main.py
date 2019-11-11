@@ -2,69 +2,37 @@ from lexerutilities import lexer, tokens
 import ply.yacc as yacc
 
 
-def p_minimum_program(p):
-    '''program : return_value DOT'''
-    pass
-
-
 def p_program(p):
-    '''program : func_or_var_def return_value DOT'''
+    '''program : return_value DOT
+               | func_or_var_def return_value DOT'''
     pass
 
 
 def p_func_or_var_def(p):
     '''func_or_var_def : var_def
-                       | function_definition'''
-    pass
-
-
-def p_func_or_var_defs(p):
-    '''func_or_var_def : var_def func_or_var_def
+                       | function_definition
+                       | var_def func_or_var_def
                        | function_definition func_or_var_def'''
     pass
 
 
 def p_function_definition(p):
-    '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE \
-        BEGIN variable_definitions return_value DOT END DOT'''
+    '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE BEGIN return_value DOT END DOT
+                           | DEFINE funcIDENT LSQUARE RSQUARE BEGIN variable_definitions return_value DOT END DOT
+                           | DEFINE funcIDENT LSQUARE formals RSQUARE BEGIN return_value DOT END DOT
+                           | DEFINE funcIDENT LSQUARE formals RSQUARE BEGIN variable_definitions return_value DOT END DOT'''
     print("func_definition( ** {} ** )".format(p[2]))
-
-
-def p_function_definition_args(p):
-    '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE \
-        BEGIN variable_definitions return_value DOT END DOT'''
-    print("func_definition( ** {} ** )".format(p[2]))
-
-
-def p_function_definition_minimum_body(p):
-    '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE \
-        BEGIN return_value DOT END DOT'''
-    print("func_definition( ** {} ** )".format(p[2]))
-
-
-def p_function_definition_args_minimum_body(p):
-    '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE \
-        BEGIN return_value DOT END DOT'''
-    print("func_definition( ** {} ** )".format(p[2]))
-
-
-def p_variable_definition(p):
-    '''variable_definitions : var_def'''
-    pass
 
 
 def p_variable_definitions(p):
-    '''variable_definitions : var_def variable_definitions'''
+    '''variable_definitions : var_def
+                            | var_def variable_definitions'''
     pass
 
 
 def p_formal(p):
-    '''formals : varIDENT'''
-    pass
-
-
-def p_formals(p):
-    '''formals : varIDENT COMMA formals'''
+    '''formals : varIDENT
+               | varIDENT COMMA formals'''
     pass
 
 
@@ -94,32 +62,24 @@ def p_var_def_pipe_expr(p):
     print(p.slice[1])
 
 
-def p_constant_expression(p):
+def p_constant_expressions(p):
     '''constant_expression : constIDENT
-                            | NUMBER_LITERAL'''
+                           | NUMBER_LITERAL'''
     pass
 
 
-def p_pipe_expression(p):   # TODO: Check that recursion works.
-    '''pipe_expression : tuple_expression'''
+def p_pipe_expressions(p):
+    '''pipe_expression : tuple_expression
+                       | tuple_expression PIPE pipe_operation
+                       | pipe_expression PIPE pipe_operation'''
     pass
 
 
-def p_pipe_expression_op(p):
-    '''pipe_expression : tuple_expression PIPE pipe_operation'''
-    pass
-
-
-def p_pipe_expression_ops(p):
-    '''pipe_expression : pipe_expression PIPE pipe_operation'''
-    pass
-
-
-def p_pipe_operation(p):
+def p_pipe_operations(p):
     '''pipe_operation : funcIDENT
-                        | MULT
-                        | PLUS
-                        | each_statement'''
+                      | MULT
+                      | PLUS
+                      | each_statement'''
     pass
 
 
@@ -128,13 +88,9 @@ def p_each_statement(p):
     pass
 
 
-def p_tuple_expression(p):  # TODO: tarkista, että toimii, kun ketjussa useampi
-    '''tuple_expression : tuple_atom'''
-    pass
-
-
 def p_tuple_expressions(p):
-    '''tuple_expression : tuple_atom tuple_operation tuple_expression'''
+    '''tuple_expression : tuple_atom
+                        | tuple_atom tuple_operation tuple_expression'''
     pass
 
 
@@ -143,36 +99,28 @@ def p_tuple_operation(p):
     pass
 
 
-def p_tuple_atom(p):
+def p_tuple_atoms(p):
     '''tuple_atom : tupleIDENT
-                | function_call
-                | LSQUARE constant_expression DOUBLEMULT constant_expression RSQUARE
-                | LSQUARE constant_expression DOUBLEDOT  constant_expression RSQUARE
-                | LSQUARE arguments RSQUARE'''
+                  | function_call
+                  | LSQUARE constant_expression DOUBLEMULT constant_expression RSQUARE
+                  | LSQUARE constant_expression DOUBLEDOT  constant_expression RSQUARE
+                  | LSQUARE arguments RSQUARE'''
     pass
 
 
-def p_function_call_no_args(p):
-    '''function_call : funcIDENT LSQUARE RSQUARE'''
-    print("function_call( ** {} ** )".format(p.slice[1].value))
-
-
-def p_function_call(p):
-    '''function_call : funcIDENT LSQUARE arguments RSQUARE'''
+def p_function_calls(p):
+    '''function_call : funcIDENT LSQUARE RSQUARE
+                     | funcIDENT LSQUARE arguments RSQUARE'''
     print("function_call( ** {} ** )".format(p.slice[1].value))
 
 
 def p_argument(p):
-    '''arguments : simple_expression'''
+    '''arguments : simple_expression
+                 | simple_expression COMMA arguments'''
     pass
 
 
-def p_arguments(p):     # TODO: Check that works when multiple in chain
-    '''arguments : simple_expression COMMA arguments'''
-    pass
-
-
-def p_literal_atom(p):
+def p_atom_literals(p):
     '''atom : NUMBER_LITERAL
             | STRING_LITERAL
             | varIDENT
@@ -187,13 +135,9 @@ def p_atom(p):
     print(p.slice[0])
 
 
-def p_factor(p):
-    '''factor : atom'''
-    print(p.slice[0])
-
-
-def p_factor_negative(p):
-    '''factor : MINUS atom'''
+def p_factors(p):
+    '''factor : atom
+              | MINUS atom'''
     print(p.slice[0])
 
 
@@ -240,7 +184,7 @@ if __name__ == '__main__':
 
     ns = arg_parser.parse_args()
     if ns.who:
-        # identify who wrote this
+        # identify who wrote this:
         print('263461 Vivian Lunnikivi')
 
     elif ns.file is None:
