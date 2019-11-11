@@ -5,10 +5,12 @@ import ply.yacc as yacc
 # first definition is the target we want to reduce
 # in other words: after processing all input tokens, if this start-symbol
 # is the only one left, we do not have any syntax errors
+def p_minimum_program(p):
+    '''program : return_value DOT'''
+
+
 def p_program(p):
-    '''program : ""
-                | func_or_var_def return_value DOT'''
-    p[0] = p[1]
+    '''program : func_or_var_def return_value DOT'''
 
 
 def p_func_or_var_def(p):
@@ -17,20 +19,48 @@ def p_func_or_var_def(p):
     pass
 
 
+def p_func_or_var_defs(p):
+    '''func_or_var_def : var_def func_or_var_def
+                       | function_definition func_or_var_def'''
+    pass
+
+
 def p_function_definition(p):
-    '''function_definition : DEFINE funcIDENT LSQUARE opt_formals RSQUARE BEGIN variable_definitions return_value DOT END DOT'''
+    '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE BEGIN variable_definitions return_value DOT END DOT'''
+    print(p.slice[1])  # NB: slice attr gives BNF format (/possibly p.slice[1].type)
+
+
+def p_function_definition_args(p):
+    '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE BEGIN variable_definitions return_value DOT END DOT'''
+    print(p.slice[1])  # NB: slice attr gives BNF format (/possibly p.slice[1].type)
+
+
+def p_function_definition_minimum_body(p):
+    '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE BEGIN return_value DOT END DOT'''
+    print(p.slice[1])  # NB: slice attr gives BNF format (/possibly p.slice[1].type)
+
+
+def p_function_definition_args_minimum_body(p):
+    '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE BEGIN return_value DOT END DOT'''
+    print(p.slice[1])  # NB: slice attr gives BNF format (/possibly p.slice[1].type)
+
+
+def p_variable_definition(p):
+    '''variable_definitions : var_def'''
     pass
 
 
-def p_opt_formals(p): # TODO: Tarkista, että toimii useammalla ketjussa
-    '''opt_formals : ""
-                    | formals'''
+def p_variable_definitions(p):
+    '''variable_definitions : var_def variable_definitions'''
     pass
+
+
+def p_formal(p):
+    '''formals : varIDENT'''
 
 
 def p_formals(p):
-    '''formals : varIDENT ""
-                | COMMA formals'''
+    '''formals : varIDENT COMMA formals'''
 
 
 def p_return_value(p):
@@ -39,32 +69,31 @@ def p_return_value(p):
     pass
 
 
-def p_variable_definitions(p):
-    '''variable_definitions : var_def ""
-                            | variable_definitions'''
-    pass
-
-
 def p_var_def(p):
     '''var_def : varIDENT LARROW simple_expression DOT
                 | constIDENT LARROW constant_expression DOT
                 | tupleIDENT LARROW tuple_expression DOT
                 | pipe_expression RARROW tupleIDENT DOT'''
-    pass
+    print(p.slice[1])    # NB: slice attr gives BNF format (/possibly p.slice[1].type)
 
 
 def p_constant_expression(p):
     '''constant_expression : constIDENT
                             | NUMBER_LITERAL'''
-    if p[1].isdigit():
-        p[0] = int(p[1])
-    else:
-        p[0] = p[1]
 
 
-def p_pipe_expression(p):   # TODO: miten saadaan useampi ketjuun?
-    '''pipe_expression : tuple_expression ""
-                        | PIPE pipe_operation'''
+def p_pipe_expression(p):   # TODO: Check that recursion works.
+    '''pipe_expression : tuple_expression'''
+    pass
+
+
+def p_pipe_expression_op(p):
+    '''pipe_expression : tuple_expression PIPE pipe_operation'''
+    pass
+
+
+def p_pipe_expression_ops(p):
+    '''pipe_expression : pipe_expression PIPE pipe_operation'''
     pass
 
 
@@ -82,8 +111,12 @@ def p_each_statement(p):
 
 
 def p_tuple_expression(p):  # TODO: tarkista, että toimii, kun ketjussa useampi
-    '''tuple_expression : tuple_atom ""
-                        | tuple_operation tuple_expression'''
+    '''tuple_expression : tuple_atom'''
+    pass
+
+
+def p_tuple_expressions(p):
+    '''tuple_expression : tuple_atom tuple_operation tuple_expression'''
     pass
 
 
@@ -101,25 +134,23 @@ def p_tuple_atom(p):
     pass
 
 
+def p_function_call_no_args(p):
+    '''function_call : funcIDENT LSQUARE RSQUARE'''
+    pass
+
+
 def p_function_call(p):
-    '''function_call : funcIDENT LSQUARE opt_arguments RSQUARE'''
-
-    if len(p) > 4:  # Function call has arguments
-        p[0] = p[1][p[3:len(p-2)]]
-
-    else:
-        p[0] = p[1]
+    '''function_call : funcIDENT LSQUARE arguments RSQUARE'''
+    pass
 
 
-def p_opt_arguments(p):
-    '''opt_arguments : ""
-                    | arguments'''
+def p_argument(p):
+    '''arguments : simple_expression'''
     pass
 
 
 def p_arguments(p):     # TODO: Check that works when multiple in chain
-    '''arguments : simple_expression ""
-                | COMMA arguments'''
+    '''arguments : simple_expression COMMA arguments'''
     pass
 
 
@@ -135,22 +166,35 @@ def p_atom(p):
 
 
 def p_factor(p):
-    '''factor : ""
-                | MINUS atom'''
+    '''factor : atom'''
+    pass
+
+
+def p_factor_negative(p):
+    '''factor : MINUS atom'''
     pass
 
 
 def p_term(p):
-    '''term : factor ""
-            | MULT factor
-            | DIV factor'''
+    '''term : factor'''
+    pass
+
+
+def p_terms(p):
+    '''term : factor MULT term
+            | factor DIV term'''
     pass
 
 
 def p_simple_expression(p):
-    '''simple_expression : term ""
-                            | PLUS term
-                            | MINUS term'''
+    '''simple_expression : term'''
+    pass
+
+
+def p_simple_expressions(p):
+    '''simple_expression : term PLUS simple_expression
+                        | term MINUS simple_expression'''
+    pass
 
 
 # error token is generated by PLY if the automation enters error state
@@ -183,6 +227,7 @@ if __name__ == '__main__':
 
     else:
         data = codecs.open( ns.file, encoding='utf-8' ).read()
+
         result = parser.parse(data, lexer=lexer, debug=False)
         if result is None:
             print( 'syntax OK' )
