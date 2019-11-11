@@ -165,7 +165,7 @@
         is fed to the simple expression as already resolved terms, and 
         sum/reduction is performed between these resolved terms.
         
-        Of course nothing is calclutaed yet in this phase, but on might think
+        Of course nothing is calculated yet in this phase, but on might think
         that the parsing order is the same in syntax parsing as in actual 
         calculations. 
         
@@ -178,5 +178,5 @@
     I liked the assignment, apart from the problems with my personal timetable,
     but that doesn't have anything to do with the task itself. I think there
     was more confusion here due to my inability to find proper definitions on
-    the PLY's BNF syntax, but after I got helpo with those, the task was guite
+    the PLY's BNF syntax, but after I got help with those, the task was quite
     straight-forward to finish.
