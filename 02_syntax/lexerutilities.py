@@ -26,15 +26,10 @@ tokens = [
     'COLON',
     'EQ',
     'NOTEQ',
-    'LT',
-    'LTEQ',
-    'GT',
-    'GTEQ',
     'PLUS',
     'MINUS',
     'MULT',
     'DIV',
-    'MOD',
     'NUMBER_LITERAL',
     'STRING_LITERAL',
     'varIDENT',
@@ -62,15 +57,10 @@ t_COLON = r':'
 
 t_EQ = r'='
 t_NOTEQ = r'!='
-t_LT = r'<'
-t_LTEQ = r'<='
-t_GT = r'>'
-t_GTEQ = r'>='
 t_PLUS = r'\+'
 t_MINUS = r'-'
 t_MULT = r'\*'
 t_DIV = r'\/'
-t_MOD = r'%'
 
 
 # Regular expressions for longer tokens:
@@ -122,20 +112,4 @@ def t_error(t):
     raise Exception(msg)
 
 
-def parse_into_tokens(input_file_data):
-
-    lexer = lex.lex()
-
-    try:
-        lexer.input(input_file_data)
-
-        while True:
-            token = lexer.token()
-            if token is None:
-                break
-            print(token)
-
-        return lexer.tokens
-
-    except Exception:
-        return []
+lexer = lex.lex()

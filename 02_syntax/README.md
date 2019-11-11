@@ -1,11 +1,25 @@
 **TODO:**
 - Improve error messages in the lexer, try http://www.dabeaz.com/ply/ply.html#ply_nn10
 
-**1. What is syntax analysis and how is it related to other parts in compilation? **
+**1. What is syntax analysis and how is it related to other parts in compilation?**
     
-    TODO
+    The aim of syntax analysis is to check whether a given snippet of 
+    arbitrary text follows the syntactical rules - that is, the grammar - 
+    of a given programming language.
     
-
+    The first step of compilation - lexical analysis - produces a list of 
+    tokens for the syntax analyser to check. Syntax analyser then examines 
+    the token sequence and recursively matches its subsequences against
+    unambiguous grammar rules that constitute the programming language. 
+    Should the program match the rules, the result of this phase is that
+    yes, this indeed is a syntactically correct program that can proceed to
+    the next phase of compilation - semantic analysis.
+    
+    However, whether the program is sane in the sense of eg. not containing
+    double definitions of variables etc., is in no way guaranteed, even if 
+    the program is syntactically correct. Those are semantic errors and
+    get checked in semantic analysis.
+    
 **2. How is the syntactic structure of the language expressed in the PLY tool? I.e., what parts are needed in the code and how are they related to syntactic rules of the language?**
     
     TODO
