@@ -4,6 +4,10 @@
   expression? That'll cause some of them to print out "twice"; first, as 
   their own match and again as a part of another simple_expression match. 
   I decided to only print the first match and the same goes for term as well.  
+  
+- I refactored the lexer utilities into its own module since I found it 
+  disturbing to implement two clear modules in the same file. This will in
+  no way affect program usage.
 
 **1. What is syntax analysis and how is it related to other parts in compilation?**
     
