@@ -5,8 +5,12 @@ import ply.yacc as yacc
 
 class TreeNode:
 
-    def __init__(self, type, parent=None):
+    def __init__(self, type, terminal=None):
+
         self.nodetype = type
+
+        if terminal is not None:
+            self.value = terminal
 
 
 def p_program_simplest(p):
@@ -40,34 +44,36 @@ def p_func_or_var_def_func_func_var(p):
 
 
 def p_function_definition_argless_simple_body(p):
-    '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE BEGIN return_value DOT END DOT'''
+    '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE \
+                             BEGIN return_value DOT END DOT'''
     print("func_definition( ** {} ** )".format(p[2]))
-    p[0] = TreeNode("function_definition_argless_simple")
-    p[0].value = p[2]                           # Function identifier
+    p[0] = TreeNode("function_definition_argless_simple", p[2])
     p[0].child_return_value = p[6]              # Return value only
 
 
 def p_function_definition_argless(p):
-    '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE BEGIN variable_definitions return_value DOT END DOT'''
+    '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE \
+                             BEGIN variable_definitions return_value DOT \
+                             END DOT'''
     print("func_definition( ** {} ** )".format(p[2]))
-    p[0] = TreeNode("function_definition_argless")
-    p[0].value = p[2]                           # Function identifier
+    p[0] = TreeNode("function_definition_argless", p[2])
     p[0].children_body_parts = [p[6], p[7]]     # vardefs and return value
 
 
 def p_function_definition_args_simple_body(p):
-    '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE BEGIN return_value DOT END DOT'''
+    '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE \
+                             BEGIN return_value DOT END DOT'''
     print("func_definition( ** {} ** )".format(p[2]))
-    p[0] = TreeNode("function_definition_args_simple")
-    p[0].value = p[2]                           # function identifier
+    p[0] = TreeNode("function_definition_args_simple", p[2])
     p[0].children_params = [p[4], p[7]]         # parameters and return value
 
 
 def p_function_definition_args(p):
-    '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE BEGIN variable_definitions return_value DOT END DOT'''
+    '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE \
+                             BEGIN variable_definitions return_value DOT \
+                             END DOT'''
     print("func_definition( ** {} ** )".format(p[2]))
-    p[0] = TreeNode("function_definition_args")
-    p[0].value = p[2]                           # Function identifier
+    p[0] = TreeNode("function_definition_args", p[2])
     p[0].children_params = [p[4], p[7], p[8]]   # params, vardefs, retval
 
 
@@ -78,73 +84,81 @@ def p_variable_definition(p):
 
 def p_variable_definitions(p):
     '''variable_definitions : var_def variable_definitions'''
-    p[0] = p[1]
-    p[0].child_next_var_def = p[2]
+    p[0] = TreeNode("variable_definitions")
+    p[0].children_vars = [p[1], p[2]]
 
 
 def p_formal(p):
     '''formals : varIDENT'''
-    p[0] = TreeNode("var_id")
-    p[0].value = p[1]
+    p[0] = TreeNode("varIDENT", p[1])
 
 
-def p_formals(p):
+def p_formals(p):   # TODO: testaa, että varIDENT resolvaa nodeksi
     '''formals : varIDENT COMMA formals'''
-    p[0] = TreeNode("var_ids")
-    p[0].children_var_id_list = [p[1], p[3]]
+    p[0] = TreeNode("formals")
+    terminal_node = TreeNode("varIDENT", p[1])
+    p[0].children_vars = [terminal_node, p[3]]
 
 
-def p_return_value(p):
-    '''return_value : EQ simple_expression
-                    | NOTEQ pipe_expression'''
-    p[0] = TreeNode("return_value_statement")
-    p[0].children_parts = [p[1], p[2]]
+def p_return_value_eq(p):
+    '''return_value : EQ simple_expression'''
+    p[0] = TreeNode("return_value_statement_eq")
+    terminal_node = TreeNode("EQ", p[1])
+    p[0].children_parts = [terminal_node, p[2]]
+
+
+def p_return_value_not_eq(p):
+    '''return_value : NOTEQ pipe_expression'''
+    p[0] = TreeNode("return_value_statement_eq")
+    terminal_node = TreeNode("NOTEQ", p[1])
+    p[0].children_parts = [terminal_node, p[2]]
 
 
 def p_var_def_variable(p):
     '''var_def : varIDENT LARROW simple_expression DOT'''
     print("variable_definition( ** {} ** )".format(p.slice[1].value))
     p[0] = TreeNode("variable_definition")
-    p[0].children_args = [p[1], p[3]]
+    terminal_node = TreeNode("varIDENT", p[1])
+    p[0].children_args = [terminal_node, p[3]]
 
 
 def p_var_def_constant(p):
     '''var_def : constIDENT LARROW constant_expression DOT'''
     print("constant_definition( ** {} ** )".format(p.slice[1].value))
     p[0] = TreeNode("variable_definition")
-    p[0].children_args = [p[1], p[3]]
+    terminal_node = TreeNode("constIDENT", p[1])
+    p[0].children_args = [terminal_node, p[3]]
 
 
 def p_var_def_tuple(p):
     '''var_def : tupleIDENT LARROW tuple_expression DOT'''
     print("tuplevariable_definition( ** {} ** )".format(p.slice[1].value))
     p[0] = TreeNode("variable_definition")
-    p[0].children_args = [p[1], p[3]]
+    terminal_node = TreeNode("tupleIDENT", p[1])
+    p[0].children_args = [terminal_node, p[3]]
 
 
 def p_var_def_pipe_expr(p):
     '''var_def : pipe_expression RARROW tupleIDENT DOT'''
     print(p.slice[1])
     p[0] = TreeNode("variable_definition")
-    p[0].children_args = [p[3], p[1]]   # Swap direction to always assign 2nd parameter to 1st arg
+    terminal_node = TreeNode("tupleIDENT", p[3])
+    p[0].children_args = [p[3], terminal_node]   # Swap direction to always assign 2nd parameter to 1st arg
 
 
 def p_constant_expression_const_id(p):
     '''constant_expression : constIDENT'''
-    p[0] = TreeNode("const_id")
-    p[0].value = p[1]
+    p[0] = TreeNode("constIDENT", p[1])
 
 
 def p_constant_expression_num_lit(p):
     '''constant_expression : NUMBER_LITERAL'''
-    p[0] = TreeNode("number_literal")
-    p[0].value = p[1]
+    p[0] = TreeNode("NUMBER_LITERAL", p[1])
 
 
 def p_pipe_expression_tuple_expr(p):
     '''pipe_expression : tuple_expression'''
-    p[0] = TreeNode("pipe_expression")
-    p[0].child_expr = p[1]
+    p[0] = p[1]
 
 
 def p_pipe_expression_tuple_chain(p):
@@ -159,19 +173,31 @@ def p_pipe_expression_pipe_chain(p):
     p[0].children_args = [p[1], p[3]]
 
 
-def p_pipe_operations(p):
-    '''pipe_operation : funcIDENT
-                      | MULT
-                      | PLUS
-                      | each_statement'''
-    p[0] = TreeNode("pipe_op")
-    p[0].child_operand = p[1]
+def p_pipe_operation_func(p):
+    '''pipe_operation : funcIDENT'''
+    p[0] = TreeNode("funcIDENT", p[1])
+
+
+def p_pipe_operation_mult(p):
+    '''pipe_operation : MULT'''
+    p[0] = TreeNode("MULT", p[1])
+
+
+def p_pipe_operation_plus(p):
+    '''pipe_operation : PLUS'''
+    p[0] =  TreeNode("PLUS", p[1])
+
+
+def p_pipe_operation_each(p):
+    '''pipe_operation : each_statement'''
+    p[0] = TreeNode("pipe_operation")
+    p[0].child_operation = p[1]
 
 
 def p_each_statement(p):
     '''each_statement : EACH COLON funcIDENT'''
-    p[0] = TreeNode("each_stmt")
-    p[0].child_arg = p[1]
+    p[0] = TreeNode("each_stmt", p[1])
+    p[0].child_arg = p[3]
 
 
 def p_tuple_expression_atom(p):
@@ -187,13 +213,12 @@ def p_tuple_expression(p):
 
 def p_tuple_operation(p):
     '''tuple_operation : DOUBLEPLUS'''
-    p[0] = p[1]
+    p[0] = TreeNode("DOUBLEPLUS", p[1])
 
 
 def p_tuple_atom_tuple_id(p):
     '''tuple_atom : tupleIDENT'''
-    p[0] = TreeNode("tuple_id")
-    p[0].value = p[1]
+    p[0] = TreeNode("tupleIDENT", p[1])
 
 
 def p_tuple_atoms_function_call(p):
