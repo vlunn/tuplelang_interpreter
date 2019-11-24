@@ -93,23 +93,22 @@ def p_formal(p):
     p[0] = TreeNode("varIDENT", p[1])
 
 
-def p_formals(p):   # TODO: testaa, että varIDENT resolvaa nodeksi
+def p_formals(p):
     '''formals : varIDENT COMMA formals'''
-    p[0] = TreeNode("formals")
-    terminal_node = TreeNode("varIDENT", p[1])
-    p[0].children_vars = [terminal_node, p[3]]
+    p[0] = TreeNode("varIDENT", p[1])
+    p[0].child_vars = p[3]
 
 
 def p_return_value_eq(p):
     '''return_value : EQ simple_expression'''
-    p[0] = TreeNode("return_value_statement_eq")
+    p[0] = TreeNode("return_value_stmt")
     terminal_node = TreeNode("EQ", p[1])
     p[0].children_parts = [terminal_node, p[2]]
 
 
 def p_return_value_not_eq(p):
     '''return_value : NOTEQ pipe_expression'''
-    p[0] = TreeNode("return_value_statement_eq")
+    p[0] = TreeNode("return_value_stmt")
     terminal_node = TreeNode("NOTEQ", p[1])
     p[0].children_parts = [terminal_node, p[2]]
 
@@ -328,8 +327,9 @@ def p_factors_atom(p):
 def p_factors_minus_atom(p):
     '''factor : MINUS atom'''
     print(p.slice[0])
-    p[0] = TreeNode("factor")
-    p[0].children_parts = [p[1], p[2]]
+    p[0] = TreeNode("signed_atom")
+    terminal_node = TreeNode("MINUS", p[1])
+    p[0].children_parts = [terminal_node, p[2]]
 
 
 def p_term(p):
@@ -346,7 +346,7 @@ def p_terms_mult(p):
 
 def p_terms_div(p):
     '''term : factor DIV term'''
-    p[0] = TreeNode("DIVIDE", p[2])
+    p[0] = TreeNode("DIV", p[2])
     p[0].children_operands = [p[1], p[3]]
 
 
