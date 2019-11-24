@@ -142,7 +142,7 @@ def p_var_def_pipe_expr(p):
     print(p.slice[1])
     p[0] = TreeNode("variable_definition")
     terminal_node = TreeNode("tupleIDENT", p[3])
-    p[0].children_args = [p[3], terminal_node]   # Swap direction to always assign 2nd parameter to 1st arg
+    p[0].children_args = [terminal_node, p[1]]
 
 
 def p_constant_expression_const_id(p):
@@ -162,13 +162,13 @@ def p_pipe_expression_tuple_expr(p):
 
 def p_pipe_expression_tuple_chain(p):
     '''pipe_expression : tuple_expression PIPE pipe_operation'''
-    p[0] = TreeNode("pipe_expression")
+    p[0] = TreeNode("pipe_expression", p[2])
     p[0].children_args = [p[1], p[3]]
 
 
 def p_pipe_expression_pipe_chain(p):
     '''pipe_expression : pipe_expression PIPE pipe_operation'''
-    p[0] = TreeNode("pipe_expression")
+    p[0] = TreeNode("pipe_expression", p[2])
     p[0].children_args = [p[1], p[3]]
 
 
@@ -196,7 +196,7 @@ def p_pipe_operation_each(p):
 def p_each_statement(p):
     '''each_statement : EACH COLON funcIDENT'''
     p[0] = TreeNode("each_stmt", p[1])
-    p[0].child_arg = p[3]
+    p[0].child_arg = TreeNode("funcIDENT", p[3])
 
 
 def p_tuple_expression_atom(p):
@@ -222,8 +222,7 @@ def p_tuple_atom_tuple_id(p):
 
 def p_tuple_atoms_function_call(p):
     '''tuple_atom : function_call'''
-    p[0] = TreeNode("function_call")
-    p[0].child_call = p[1]
+    p[0] = p[1]
 
 
 def p_tuple_atoms_doublemult(p):
@@ -247,56 +246,49 @@ def p_tuple_atoms_args(p):
 def p_function_call_paramless(p):
     '''function_call : funcIDENT LSQUARE RSQUARE'''
     print("function_call( ** {} ** )".format(p.slice[1].value))
-    p[0] = TreeNode("function_call_parameterless")
-    p[0].value = p[1]
+    p[0] = TreeNode("function_call_paramless", p[1])
 
 
 def p_function_call_args(p):
     '''function_call : funcIDENT LSQUARE arguments RSQUARE'''
     print("function_call( ** {} ** )".format(p.slice[1].value))
-    p[0] = TreeNode("function_call_with_args")
-    p[0].value = p[1]
-    p[0].child_args = p[3]
+    p[0] = TreeNode("function_call_with_params", p[1])
+    p[0].child_param_list = p[3]
 
 
 def p_argument(p):
     '''arguments : simple_expression'''
-    p[0] = TreeNode("argument")
-    p[0].child_argument = p[1]
+    p[0] = p[1]
 
 
 def p_arguments(p):
     '''arguments : simple_expression COMMA arguments'''
-    p[0] = TreeNode("argument")
-    p[0].children_args = [p[1], p[3]]
+    p[0] = p[1]
+    p[0].child_next_param = p[3]
 
 
 def p_atom_literal_num(p):
     '''atom : NUMBER_LITERAL'''
     print("{}( ** {} ** )".format(p.slice[0], p.slice[1].value))
-    p[0] = TreeNode("literal_num")
-    p[0].value = p[1]
+    p[0] = TreeNode("NUMBER_LITERAL", p[1])
 
 
 def p_atom_literal_str(p):
     '''atom : STRING_LITERAL'''
     print("{}( ** {} ** )".format(p.slice[0], p.slice[1].value))
-    p[0] = TreeNode("literal_str")
-    p[0].value = p[1]
+    p[0] = TreeNode("STRING_LITERAL", p[1])
 
 
 def p_atom_literal_var_id(p):
     '''atom : varIDENT'''
     print("{}( ** {} ** )".format(p.slice[0], p.slice[1].value))
-    p[0] = TreeNode("literal_varID")
-    p[0].value = p[1]
+    p[0] = TreeNode("varIDENT", p[1])
 
 
 def p_atom_literal_const_id(p):
     '''atom : constIDENT'''
     print("{}( ** {} ** )".format(p.slice[0], p.slice[1].value))
-    p[0] = TreeNode("literal_constID")
-    p[0].value = p[1]
+    p[0] = TreeNode("constIDENT", p[1])
 
 
 def p_atom_func_call(p):
