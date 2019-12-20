@@ -73,7 +73,7 @@ def t_NUMBER_LITERAL(t):
 
 
 def t_STRING_LITERAL(t):
-    r'".+"'
+    r'\"([^\"]*)\"'
     t.value = t.value[1:-1]
     return t
 
