@@ -19,28 +19,40 @@ def p_program_simplest(p):
     p[0].child_return_value = p[1]
 
 
-def p_program(p):
+def p_program_1(p):
     '''program : func_or_var_def return_value DOT'''
     p[0] = TreeNode("program")
     p[0].children_stmts = [p[1], p[2]]
 
 
-def p_func_or_var_def(p):
-    '''func_or_var_def : var_def
-                       | function_definition'''
+def p_program_2(p):
+    '''program : program func_or_var_def return_value DOT'''
     p[0] = p[1]
+    p[0].children_stmts.append(p[2])
 
 
-def p_func_or_var_def_var_func_var(p):
-    '''func_or_var_def : var_def func_or_var_def'''
-    p[0] = TreeNode("variable_and_func_or_var_definition")
-    p[0].children_stmts = [p[1], p[2]]
+def p_func_or_var_def_v(p):
+    '''func_or_var_def : var_def'''
+    p[0] = TreeNode("definitions")
+    p[0].children_defs = [p[1]]
 
 
-def p_func_or_var_def_func_func_var(p):
-    '''func_or_var_def : function_definition func_or_var_def'''
-    p[0] = TreeNode("function_and_func_or_var_definition")
-    p[0].children_stmts = [p[1], p[2]]
+def p_func_or_var_def_f(p):
+    '''func_or_var_def : function_definition'''
+    p[0] = TreeNode("definitions")
+    p[0].children_defs = [p[1]]
+
+
+def p_func_or_var_def_v(p):
+    '''func_or_var_def : func_or_var_def var_def'''
+    p[0] = p[1]
+    p[1].children_defs.append(p[2])
+
+
+def p_func_or_var_def_f(p):
+    '''func_or_var_def : func_or_var_def function_definition'''
+    p[0] = p[1]
+    p[1].children_defs.append(p[2])
 
 
 def p_function_definition_argless_simple_body(p):
@@ -75,24 +87,26 @@ def p_function_definition_args(p):
 
 def p_variable_definition(p):
     '''variable_definitions : var_def'''
-    p[0] = p[1]
+    p[0] = TreeNode("function_body")
+    p[0].children_var_defs = [p[1]]
 
 
 def p_variable_definitions(p):
-    '''variable_definitions : var_def variable_definitions'''
-    p[0] = TreeNode("variable_definitions")
-    p[0].children_vars = [p[1], p[2]]
+    '''variable_definitions : variable_definitions var_def'''
+    p[0] = p[1]
+    p[0].children_var_defs.append(p[2])
 
 
 def p_formal(p):
     '''formals : varIDENT'''
-    p[0] = TreeNode("varIDENT", p[1])
+    p[0] = TreeNode("formal_parameters")
+    p[0].children_parameters = [TreeNode("varIDENT", p[1])]
 
 
 def p_formals(p):
-    '''formals : varIDENT COMMA formals'''
-    p[0] = TreeNode("varIDENT", p[1])
-    p[0].child_vars = p[3]
+    '''formals : formals COMMA varIDENT'''
+    p[0] = p[1]
+    p[0].children_parameters.append(TreeNode("varIDENT", p[3]))
 
 
 def p_return_value_eq(p):
@@ -243,18 +257,19 @@ def p_function_call_paramless(p):
 def p_function_call_args(p):
     '''function_call : funcIDENT LSQUARE arguments RSQUARE'''
     p[0] = TreeNode("function_call_with_params", p[1])
-    p[0].child_param_list = p[3]
+    p[0].child_p_list = p[3]
 
 
 def p_argument(p):
     '''arguments : simple_expression'''
-    p[0] = p[1]
+    p[0] = TreeNode("parameters")
+    p[0].children_params = [p[1]]
 
 
 def p_arguments(p):
-    '''arguments : simple_expression COMMA arguments'''
+    '''arguments : arguments COMMA simple_expression'''
     p[0] = p[1]
-    p[0].child_next_param = p[3]
+    p[1].children_params.append(p[3])
 
 
 def p_atom_literal_num(p):
