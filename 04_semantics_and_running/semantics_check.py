@@ -3,6 +3,40 @@ import syntax_tree_generation
 import tree_print
 
 
+def add_symbol(node, symtbl):
+    """ Add a new symbol into the symbol table.
+    If identifier already exists, returns an error message.
+    :param node: Reference to the corresponding AST Tree node.
+    :param symtbl: Symbol table to modify.
+    :return: None / error_message
+    """
+    identifier = node.value
+    if identifier not in symtbl:
+        symtbl[identifier] = SymbolData(node.nodetype[3:], node)
+        return None  # Successful add.
+    else:
+        return "Illegal redefinition of an identifier: {}!".format(identifier)
+
+
+def create_symbol_table(node, semdata):
+    symtbl = semdata.symtbl
+    id_ids = {"TN_vardef_": ["varID", "constID", "tupleID", "pipe"],
+              "TN_fundef_": ["argless_bodyless", "argless_with_body",
+                             "args_bodyless", "args_with_body"]}
+    nodetype = node.nodetype
+
+    if nodetype is not None:
+        for id_id in id_ids.keys():
+
+            # Check that nodetype is a recognized identifier type (var or func def):
+            if nodetype.startswith(id_id):
+
+                # Check what kind of a variable or function definition it is:
+                if nodetype[len(id_id):] in id_ids[id_id]:
+                    return add_symbol(node, symtbl)     # Try to add symbol to symbol table
+                else:
+                    return "Undefined type of identifier definition: {}!".format(node.nodetype)
+
 # Define semantic check functions:
 
 def check_literals(node, semdata):
@@ -14,6 +48,12 @@ def check_literals(node, semdata):
 
 def semantic_checks(tree, semdata):
     '''run all semantic checks'''
+    visit_tree(tree, create_symbol_table, None, semdata)
+
+    for key in semdata.symtbl.keys():
+        print(key, ": ", semdata.symtbl[key])
+
+
     visit_tree(tree, check_literals, None, semdata)
 
 

@@ -4,12 +4,15 @@ import ply.yacc as yacc
 
 class TreeNode:
 
-    def __init__(self, type, terminal=None):
+    def __init__(self, type, terminal=None, line=None):
 
         self.nodetype = type
 
         if terminal is not None:
             self.value = terminal
+
+        if line is not None:
+            self.lineno = line
 
 
 def p_program_simplest(p):
@@ -32,7 +35,7 @@ def p_program_2(p):
 
 def p_func_or_var_def_v(p):
     '''func_or_var_def : var_def'''
-    p[0] = TreeNode("TN_definitions")
+    p[0] = TreeNode("TN_definitions", line=p.lineno)
     p[0].children_defs = [p[1]]
 
 
@@ -57,7 +60,7 @@ def p_func_or_var_def_func_def(p):
 def p_function_definition_argless_bodyless(p):
     '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE \
                              BEGIN return_value DOT END DOT'''
-    p[0] = TreeNode("TN_fundef_argless_bodyless", p[2])
+    p[0] = TreeNode("TN_fundef_argless_bodyless", p[2], line=p.slice[1].lineno)
     p[0].child_return_value = p[6]                 # Return value only
 
 
@@ -65,7 +68,7 @@ def p_function_definition_argless_with_body(p):
     '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE \
                              BEGIN variable_definitions return_value DOT \
                              END DOT'''
-    p[0] = TreeNode("TN_fundef_argless_with_body", p[2])
+    p[0] = TreeNode("TN_fundef_argless_with_body", p[2], line=p.slice[1].lineno)
     p[0].child_return_value = p[7]                 # Return value
     p[0].children_body_statements = [p[6]]         # Variable definitions
 
@@ -73,7 +76,7 @@ def p_function_definition_argless_with_body(p):
 def p_function_definition_args_bodyless(p):
     '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE \
                              BEGIN return_value DOT END DOT'''
-    p[0] = TreeNode("TN_fundef_args_bodyless", p[2])
+    p[0] = TreeNode("TN_fundef_args_bodyless", p[2], line=p.slice[1].lineno)
     p[0].child_return_value = p[7]                 # Return value
     p[0].children_formals = [p[4]]                 # Formal parameters
 
@@ -82,7 +85,7 @@ def p_function_definition_args_with_body(p):
     '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE \
                              BEGIN variable_definitions return_value DOT \
                              END DOT'''
-    p[0] = TreeNode("TN_fundef_args_with_body", p[2])
+    p[0] = TreeNode("TN_fundef_args_with_body", p[2], line=p.slice[1].lineno)
     p[0].child_return_value = p[8]                 # Return value
     p[0].children_formals_and_body = [p[4], p[7]]  # Formals, vardefs
 
@@ -127,30 +130,26 @@ def p_return_value_not_eq(p):
 
 def p_var_def_variable(p):
     '''var_def : varIDENT LARROW simple_expression DOT'''
-    p[0] = TreeNode("TN_variable_definition")
-    terminal_node = TreeNode("TN_varIDENT", p[1])
-    p[0].children_id_and_expression = [terminal_node, p[3]]
+    p[0] = TreeNode("TN_vardef_varID", p[1], line=p.slice[1].lineno)
+    p[0].child_expression = p[3]
 
 
 def p_var_def_constant(p):
     '''var_def : constIDENT LARROW constant_expression DOT'''
-    p[0] = TreeNode("TN_variable_definition")
-    terminal_node = TreeNode("TN_constIDENT", p[1])
-    p[0].children_id_and_expression = [terminal_node, p[3]]
+    p[0] = TreeNode("TN_vardef_constID", p[1], line=p.slice[1].lineno)
+    p[0].child_expression = p[3]
 
 
 def p_var_def_tuple(p):
     '''var_def : tupleIDENT LARROW tuple_expression DOT'''
-    p[0] = TreeNode("TN_variable_definition")
-    terminal_node = TreeNode("TN_tupleIDENT", p[1])
-    p[0].children_id_and_expression = [terminal_node, p[3]]
+    p[0] = TreeNode("TN_vardef_tupleID", p[1], line=p.slice[1].lineno)
+    p[0].child_expression = p[3]
 
 
 def p_var_def_pipe_expr(p):
     '''var_def : pipe_expression RARROW tupleIDENT DOT'''
-    p[0] = TreeNode("TN_variable_definition")
-    terminal_node = TreeNode("TN_tupleIDENT", p[3])
-    p[0].children_id_and_expression = [terminal_node, p[1]]
+    p[0] = TreeNode("TN_vardef_pipe", p[3], line=p.slice[1].lineno)
+    p[0].child_expression = p[1]
 
 
 def p_constant_expression_const_id(p):
