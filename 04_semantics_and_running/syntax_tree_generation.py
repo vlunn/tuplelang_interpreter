@@ -14,6 +14,11 @@ class TreeNode:
         if line is not None:
             self.lineno = line
 
+    def __str__(self):
+        if self.value is not None:
+            return "TreeNode object of type {}, value: {}".format(self.nodetype, self.value)
+        else:
+            return "TreeNode object of type {}".format(self.nodetype)
 
 def p_program_simplest(p):
     '''program : return_value DOT'''
@@ -116,16 +121,14 @@ def p_formals(p):
 
 def p_return_value_eq(p):
     '''return_value : EQ simple_expression'''
-    p[0] = TreeNode("TN_return_value_stmt")
-    terminal_node = TreeNode("TN_EQ", p[1])
-    p[0].children_parts = [terminal_node, p[2]]
+    p[0] = TreeNode("TN_return_value_stmt", p[1])
+    p[0].child_expression = p[2]
 
 
 def p_return_value_not_eq(p):
     '''return_value : NOTEQ pipe_expression'''
-    p[0] = TreeNode("TN_return_value_stmt")
-    terminal_node = TreeNode("TN_NOTEQ", p[1])
-    p[0].children_parts = [terminal_node, p[2]]
+    p[0] = TreeNode("TN_return_value_stmt", p[1])
+    p[0].child_expression = p[2]
 
 
 def p_var_def_variable(p):
