@@ -54,34 +54,37 @@ def p_func_or_var_def_func_def(p):
     p[1].children_defs.append(p[2])
 
 
-def p_function_definition_argless_simple_body(p):
+def p_function_definition_argless_bodyless(p):
     '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE \
                              BEGIN return_value DOT END DOT'''
-    p[0] = TreeNode("TN_function_definition_argless_simple", p[2])
-    p[0].child_return_value = p[6]              # Return value only
+    p[0] = TreeNode("TN_fundef_argless_bodyless", p[2])
+    p[0].child_return_value = p[6]                 # Return value only
 
 
-def p_function_definition_argless(p):
+def p_function_definition_argless_with_body(p):
     '''function_definition : DEFINE funcIDENT LSQUARE RSQUARE \
                              BEGIN variable_definitions return_value DOT \
                              END DOT'''
-    p[0] = TreeNode("TN_function_definition_argless", p[2])
-    p[0].children_body_parts = [p[6], p[7]]     # vardefs and return value
+    p[0] = TreeNode("TN_fundef_argless_with_body", p[2])
+    p[0].child_return_value = p[7]                 # Return value
+    p[0].children_body_statements = [p[6]]         # Variable definitions
 
 
-def p_function_definition_args_simple_body(p):
+def p_function_definition_args_bodyless(p):
     '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE \
                              BEGIN return_value DOT END DOT'''
-    p[0] = TreeNode("TN_function_definition_args_simple", p[2])
-    p[0].children_params = [p[4], p[7]]         # parameters and return value
+    p[0] = TreeNode("TN_fundef_args_bodyless", p[2])
+    p[0].child_return_value = p[7]                 # Return value
+    p[0].children_formals = [p[4]]                 # Formal parameters
 
 
-def p_function_definition_args(p):
+def p_function_definition_args_with_body(p):
     '''function_definition : DEFINE funcIDENT LSQUARE formals RSQUARE \
                              BEGIN variable_definitions return_value DOT \
                              END DOT'''
-    p[0] = TreeNode("TN_function_definition_args", p[2])
-    p[0].children_params = [p[4], p[7], p[8]]   # params, vardefs, retval
+    p[0] = TreeNode("TN_fundef_args_with_body", p[2])
+    p[0].child_return_value = p[8]                 # Return value
+    p[0].children_formals_and_body = [p[4], p[7]]  # Formals, vardefs
 
 
 def p_variable_definition(p):
@@ -99,13 +102,13 @@ def p_variable_definitions(p):
 def p_formal(p):
     '''formals : varIDENT'''
     p[0] = TreeNode("TN_formal_parameters")
-    p[0].children_parameters = [TreeNode("TN_varIDENT", p[1])]
+    p[0].children_formals = [TreeNode("TN_varIDENT", p[1])]
 
 
 def p_formals(p):
     '''formals : formals COMMA varIDENT'''
     p[0] = p[1]
-    p[0].children_parameters.append(TreeNode("TN_varIDENT", p[3]))
+    p[0].children_formals.append(TreeNode("TN_varIDENT", p[3]))
 
 
 def p_return_value_eq(p):
@@ -126,28 +129,28 @@ def p_var_def_variable(p):
     '''var_def : varIDENT LARROW simple_expression DOT'''
     p[0] = TreeNode("TN_variable_definition")
     terminal_node = TreeNode("TN_varIDENT", p[1])
-    p[0].children_args = [terminal_node, p[3]]
+    p[0].children_id_and_expression = [terminal_node, p[3]]
 
 
 def p_var_def_constant(p):
     '''var_def : constIDENT LARROW constant_expression DOT'''
     p[0] = TreeNode("TN_variable_definition")
     terminal_node = TreeNode("TN_constIDENT", p[1])
-    p[0].children_args = [terminal_node, p[3]]
+    p[0].children_id_and_expression = [terminal_node, p[3]]
 
 
 def p_var_def_tuple(p):
     '''var_def : tupleIDENT LARROW tuple_expression DOT'''
     p[0] = TreeNode("TN_variable_definition")
     terminal_node = TreeNode("TN_tupleIDENT", p[1])
-    p[0].children_args = [terminal_node, p[3]]
+    p[0].children_id_and_expression = [terminal_node, p[3]]
 
 
 def p_var_def_pipe_expr(p):
     '''var_def : pipe_expression RARROW tupleIDENT DOT'''
     p[0] = TreeNode("TN_variable_definition")
     terminal_node = TreeNode("TN_tupleIDENT", p[3])
-    p[0].children_args = [terminal_node, p[1]]
+    p[0].children_id_and_expression = [terminal_node, p[1]]
 
 
 def p_constant_expression_const_id(p):
@@ -168,33 +171,33 @@ def p_pipe_expression_tuple_expr(p):
 def p_pipe_expression_tuple_chain(p):
     '''pipe_expression : tuple_expression PIPE pipe_operation'''
     p[0] = TreeNode("TN_pipe_expression", p[2])
-    p[0].children_args = [p[1], p[3]]
+    p[0].children_expression_and_operation = [p[1], p[3]]
 
 
 def p_pipe_expression_pipe_chain(p):
     '''pipe_expression : pipe_expression PIPE pipe_operation'''
     p[0] = TreeNode("TN_pipe_expression", p[2])
-    p[0].children_args = [p[1], p[3]]
+    p[0].children_expression_and_operation = [p[1], p[3]]
 
 
 def p_pipe_operation_func(p):
     '''pipe_operation : funcIDENT'''
-    p[0] = TreeNode("TN_funcIDENT", p[1])
+    p[0] = TreeNode("TN_pipeop_funcIDENT", p[1])
 
 
 def p_pipe_operation_mult(p):
     '''pipe_operation : MULT'''
-    p[0] = TreeNode("TN_MULT", p[1])
+    p[0] = TreeNode("TN_pipeop_MULT", p[1])
 
 
 def p_pipe_operation_plus(p):
     '''pipe_operation : PLUS'''
-    p[0] =  TreeNode("TN_PLUS", p[1])
+    p[0] =  TreeNode("TN_pipeop_PLUS", p[1])
 
 
 def p_pipe_operation_each(p):
     '''pipe_operation : each_statement'''
-    p[0] = TreeNode("TN_pipe_operation")
+    p[0] = TreeNode("TN_pipeop_each")
     p[0].child_operation = p[1]
 
 
@@ -303,20 +306,20 @@ def p_atom_simple_expr(p):
 
 def p_atom_tuple(p):
     '''atom : SELECT COLON constant_expression LSQUARE tuple_expression RSQUARE'''
-    p[0] = TreeNode("TN_select_const_expr_to_tuple_expr", p[1])
+    p[0] = TreeNode("TN_select_from_tuple", p[1])
     p[0].children_parts = [p[3], p[5]]  # Note: Omits control characters, exist implicitly.
 
 
 def p_factors_atom(p):
     '''factor : atom'''
-    p[0] = p[1]
+    p[0] = TreeNode("TN_atom")
+    p[0].child_atom = p[1]
 
 
 def p_factors_minus_atom(p):
     '''factor : MINUS atom'''
-    p[0] = TreeNode("TN_signed_atom")
-    terminal_node = TreeNode("TN_MINUS", p[1])
-    p[0].children_parts = [terminal_node, p[2]]
+    p[0] = TreeNode("TN_atom", p[1])
+    p[0].child_atom = p[2]
 
 
 def p_term(p):
