@@ -15,7 +15,7 @@ class TreeNode:
             self.lineno = line
 
     def __str__(self):
-        if self.value is not None:
+        if hasattr(self, "value"):
             return "TreeNode object of type {}, value: {}".format(self.nodetype, self.value)
         else:
             return "TreeNode object of type {}".format(self.nodetype)
