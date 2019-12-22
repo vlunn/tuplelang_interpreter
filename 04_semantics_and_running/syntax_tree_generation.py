@@ -363,7 +363,7 @@ def p_simple_expression_minus(p):
 # (cannot continue reducing or shifting)
 def p_error(p):
     if p is not None:
-        print("{}:Syntax Error (token:'{}')".format(p.lineno, p.value))
+        print("{}: Syntax Error (token: '{}')".format(p.lineno, p.value))
     else:
         print("Missing return statement from the end of the input file!")
     raise SystemExit

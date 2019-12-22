@@ -4,6 +4,85 @@ import syntax_tree_generation
 import semantics_check
 
 
+def eval_parameters(node, semdata):
+    """TN_parameters"""
+    if hasattr(node, 'children_params'):
+        node.value = []
+        for param_node in node.children_params:
+            # Evaluate parameter node:
+            status = eval_node(param_node, semdata)
+            if status is not None:
+                return status
+
+            # Append the parameter node value to this node's value
+            if isinstance(param_node.value, int):
+                node.value.append(param_node.value)
+            elif isinstance(param_node.value, list):
+                node.value = node.value + param_node.value
+            else:
+                return "Illegal tuple parameter: {}, expected int or list!".format(node.children_params)
+    else:
+        return "Missing parameter list definition for node: {}!".format(node)
+
+
+def eval_tuple_atom(node, semdata):
+    """
+    Has child_arg_list that is TN_parameters, which has children: params (n atoms)
+    :param node:
+    :param semdata:
+    :return:
+    """
+    if hasattr(node, 'child_arg_list'):
+        status = eval_parameters(node.child_arg_list, semdata)
+        if status is not None:
+            return status
+        node.value = node.child_arg_list.value
+
+
+def eval_tuple_expr(node, semdata):
+    """ Evaluate tuple expression - that is, concatenating tuple atoms.
+    :param node: Tuple expression tree node
+    """
+    if hasattr(node, 'children_args') and len(node.children_args) == 3:
+        children = node.children_args
+
+        # Evaluate 1st and 3rd child, aka. operands:
+        concatenation_parts = []
+        for child in [children[0], children[2]]:
+            if child.nodetype == 'TN_tupleIDENT':
+                identifier = child.value
+                if identifier in semdata.symtbl.keys():
+                    concatenation_parts.append(semdata.symtbl[identifier].get_value())
+                else:
+                    return "Error: cannot access undefined tuple variable: {}!".format(identifier)
+            else:
+                status = eval_funcs[child.nodetype](child, semdata)
+                if status is not None:
+                    return status
+                concatenation_parts.append(child.value)
+
+        # Concatenate tuples and save the value in this parent node:
+        node.value = concatenation_parts[0] + concatenation_parts[1]
+
+    else:
+        return "Illegal tuple expression!"
+
+
+def eval_doubledot(node, semdata):
+    """ Operation creates a list containing a range of numbers starting
+        from the given lower bound, ending up at the given upper bound."""
+    lower = node.children_operands[0].value
+    upper = node.children_operands[1].value
+    node.value = [x for x in range(lower, upper+1)]
+
+
+def eval_doublemult(node, semdata):
+    """ Operation creates a list containing given element given amount of times."""
+    multiplier = node.children_operands[0].value
+    element = node.children_operands[1].value
+    node.value = [element]*multiplier
+
+
 def eval_operands(node, semdata):
     """
     Binary operations (PLUS, MINUS, MULT, DIV) have operands. This helper
@@ -157,7 +236,7 @@ def eval_atom(node, semdata):
 
 def eval_vardef_varID(node, semdata):
     """ Evaluate variable definition node.
-    Child simple_expression can be: and atom tree node
+    Child simple_expression can be: an atom tree node
     or PLUS, MINUS, DIV or MULT operation.
     :param node:
     :param semdata:
@@ -175,14 +254,45 @@ def eval_vardef_varID(node, semdata):
             symtbl[node.value].set_value(node.child_expression.value)
 
 
+def eval_vardef_tupleID(node, semdata):
+    """ Evaluate tuple variable definition node.
+    Child expression can be: TN_tuple_expr, TN_tuple_atom_args,
+    TN_DOUBLEDOT or TN_DOUBLEMULT.
+    :param node: TN_vardef_tupleID tree node
+    :param semdata:
+    :return:
+    """
+    symtbl = semdata.symtbl
+
+    if hasattr(node.child_expression, "nodetype"):
+        child_node_type = node.child_expression.nodetype
+
+        if child_node_type in ['TN_tuple_expr', 'TN_tuple_atom_args',
+                               'TN_DOUBLEDOT', 'TN_DOUBLEMULT']:
+            status = eval_funcs[child_node_type](node.child_expression, semdata)
+            if status is not None:
+                return status
+            symtbl[node.value].set_value(node.child_expression.value)
+
+
 def eval_return(node, semdata):
     """Evaluate return tree node"""
+
     if node.value in ['=', '!=']:
+        # Evaluate return value statement:
         status = eval_node(node.child_expression, semdata)
         if status is not None:
             return status
-        semdata.stack[0] = node.child_expression.value
-        print("Program result: ", semdata.stack[0], sep="")
+
+        # Print out the program return value:
+        child = node.child_expression
+        if child.nodetype in ['TN_atom', 'TN_PLUS', 'TN_MINUS',
+                              'TN_MULT', 'TN_DIV', 'TN_tuple_expr']:
+            retval = child.value
+        else:
+            retval = semdata.symtbl[child.value].get_value()
+        print("Program result: ", retval, sep="")
+
     else:
         return "Impossible return statement!"
 
@@ -200,12 +310,17 @@ def eval_children(node, semdata):
 eval_funcs = {'TN_program': eval_children,
               'TN_definitions': eval_children,
               'TN_vardef_varID': eval_vardef_varID,
+              'TN_vardef_tupleID': eval_vardef_tupleID,
               'TN_return_value_stmt': eval_return,
               'TN_PLUS': eval_plus,
               'TN_MINUS': eval_minus,
               'TN_MULT': eval_mult,
               'TN_DIV': eval_div,
-              'TN_atom': eval_atom}
+              'TN_atom': eval_atom,
+              'TN_tuple_atom_args': eval_tuple_atom,
+              'TN_tuple_expr': eval_tuple_expr,
+              'TN_DOUBLEDOT' : eval_doubledot,
+              'TN_DOUBLEMULT': eval_doublemult}
 
 
 def eval_node(node, semdata):

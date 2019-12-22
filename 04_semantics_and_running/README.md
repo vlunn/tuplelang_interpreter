@@ -66,7 +66,35 @@
        
        * Note: Program also accepts string variables, even thought they 
          have little use; they can be catenated ":D".  
+         
+    3. Tuple variables work and normal integer variables can be utilized
+       in tuple variable definitions as long as the program syntax allows
+       it. Example operations:
+       
+          <varname> <- [1,2,3].
+          <negseq> <- [1,-2].     // negative elements     
+          <var>  <- [one, 2,3].   // variable as element
+          <seq>  <- [1..5].       // range definition of sequence
+          <seq2> <- [1**5].       // value: [1,1,1,1,1]
+          <con1> <- <aa> ++ <bb>  // tuple concatenation
+          <con2> <- <aa> ++ [1]   // tuple concatenation with tuple literals
+          <con3> <- <aa> ++ [bb]  // tuple concatenation with tuple literals with variables
+          
+       Illegal operations, doesn't belong to syntax -> syntax error message:
+
+          <seq> <- [-1..4].       // Only positive integers allowed with doubledot
+          <seq> <- [-1**4].       // Only positive integers allowed with doubledot
+          lower <- 1.
+          <seq> <- [lower..4].    // No variables with dot syntax  
+          <seq> <- [lower**4].    // No variables with double mult
            
+       * It would be rather easy to allow string tuples, or mixing integer and
+         str tuples and it wouldn't even cause program crashes, but I don't 
+         think that would be a good design choice before diving deeper into 
+         possible future developement (eg. functions etc.), so I left them out.
+         Now string tuples just raise an error message (or syntax error if it 
+         goes against syntax rules). 
+
 **3. Implemented own things**
 
     1. Line numbers in error messages about redefined identifiers.
