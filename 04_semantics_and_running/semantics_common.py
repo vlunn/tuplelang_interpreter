@@ -24,9 +24,17 @@ class SymbolData:
     def __init__(self, symtype, defnode):
         self.symtype = symtype
         self.defnode = defnode
+        self.value = None
+
+    def set_value(self, value):
+        self.value = value
+
+    def get_value(self):
+        return self.value
 
     def __str__(self):
-        return "SymbolData object of type {}".format(self.symtype)
+        return "SymbolData object of type {} ({}))".format(self.symtype, self.value)
+
 
 # The function is given the root of the tree
 def visit_tree(node, before_func=None, after_func=None, semdata=None):
