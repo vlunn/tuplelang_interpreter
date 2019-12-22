@@ -109,7 +109,7 @@ def eval_atom(node, semdata):
       - binary operation node
     as it's child. The child is evaluated according to the
     semantic rules and it's value is saved in the atom node's
-    value attribute.
+    value attribute. There are multiple semantic checks here.
 
     Note: constants, function calls, simple_expressions or
     tuple select are also possible atom child nodes according
