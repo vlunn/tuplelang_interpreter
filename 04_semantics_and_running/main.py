@@ -4,20 +4,14 @@ import syntax_tree_generation
 import semantics_check
 
 
-def print_stack(semdata, opt=""):  # For debugging purposes
-    print("Stack {}: ".format(opt))
-    for item in semdata.stack:
-        print(item)
-    print()
-
-
-def run_program(tree, semdata):
-    semdata.stack = [None]
-    return eval_node(tree, semdata)
-
-
 def eval_operands(node, semdata):
-
+    """
+    Binary operations (PLUS, MINUS, MULT, DIV) have operands. This helper
+    function evaluates the operands.
+    :param node: binary operation node
+    :param semdata:
+    :return: status and the first and second evaluated operand.
+    """
     status = eval_node(node.children_operands[0], semdata)
     if status is not None:
         return status, None, None
@@ -44,9 +38,28 @@ def eval_plus(node, semdata):
             semdata.stack[0] = sum  # defined for str and numbers
 
         else:
-            return "Illegal PLUS-operation: operands must have same type!"
+            return "Illegal PLUS-operation: operands must have the same type!"
     else:
         return "Impossible plus statement! {}".format(node.value)
+
+
+def eval_minus(node, semdata):
+    if node.value == '-':
+        status, operand1, operand2 = eval_operands(node, semdata)
+        if status is not None:
+            return status
+
+        # Operands must be of the same type, minus only defined for numbers:
+        if isinstance(operand1.value, int) and isinstance(operand2.value, int):
+            # Replace TN_MINUS with the result of evaluation:
+            difference = operand1.value - operand2.value
+            node.value = difference
+            semdata.stack[0] = difference  # defined for str and numbers
+
+        else:
+            return "Illegal MINUS-operation: operands must have the same type!"
+    else:
+        return "Impossible minus statement! {}".format(node.value)
 
 
 def eval_mult(node, semdata):
@@ -61,7 +74,7 @@ def eval_mult(node, semdata):
             node.value = result
             semdata.stack [0] = result
         else:
-            return "Illegal MULT-operation: operands must be numbers!"
+            return "Illegal MULT-operation: both operands must be numbers!"
     else:
         return "Impossible multiplication statement!".format(node.value)
 
@@ -81,38 +94,30 @@ def eval_div(node, semdata):
             else:
                 return "Illegal division by zero!"
         else:
-            return "Illegal div-operation: operands must be numbers!"
+            return "Illegal div-operation: both operands must be numbers!"
     else:
         return "Impossible division statement!".format(node.value)
 
 
-def eval_return(node, semdata):
-    if node.value in ['=', '!=']:
-        semdata.stack[0] = node.child_expression
-        status = eval_node(node.child_expression, semdata)
-        if status is not None:
-            return status
-        print_stack(semdata, "return")  # Debug
-    else:
-        return "Impossible return statement!"
-
-
-def eval_program(node, semdata):
-    for i in node.children_stmts:
-        status = eval_node(i, semdata)
-        if status is not None:
-            return status
-
-    for key in semdata.symtbl.keys():  # Print symbol table, debugging-purpose
-        print(key, ": ", semdata.symtbl[key])
-
-
 def eval_atom(node, semdata):
-    """
-    TN_atom can contain: numlit, stringlit, varIDENT, constIDENT, fun_call, simple_expr or select.
-    :param node:
-    :param semdata:
-    :return:
+    """ Evaluates an atom node.
+
+    Atom node can contain a:
+      - number literal,
+      - string literal,
+      - variable or
+      - binary operation node
+    as it's child. The child is evaluated according to the
+    semantic rules and it's value is saved in the atom node's
+    value attribute.
+
+    Note: constants, function calls, simple_expressions or
+    tuple select are also possible atom child nodes according
+    to the syntax rules, but they have not been implemented yet.
+
+    :param node: Atom type tree node.
+    :param semdata: Semantic data containing a symbol table.
+    :return: None if all goes well, error message otherwise.
     """
 
     if hasattr(node, "child_atom") and hasattr(node.child_atom, "nodetype"):
@@ -129,19 +134,17 @@ def eval_atom(node, semdata):
             if signed:
                 return "Illegal operation: string literal sign assignment!"
 
-        elif child_node_type in ['TN_varIDENT', 'TN_constIDENT']:  # Can contain only numeric data
+        elif child_node_type in ['TN_varIDENT', 'TN_constIDENT']:
             identifier = node.child_atom.value
             if identifier not in semdata.symtbl.keys():
-                return "Error: Cannot access undefined variable!"
-
+                return "Error: Cannot access undefined variable: {}!".format(identifier)
+            # Fetch child value, which can only contain a number or None:
             node.value = semdata.symtbl[identifier].get_value()
             if node.value is not None:
                 if signed and child_node_type == 'TN_varIDENT':
                     node.value = node.value * -1
                 elif signed and child_node_type == 'TN_constIDENT':
                     return "Illegal operation: Cannot reassign constant!"
-            else:
-                print("DEBUG: {}:n {} value oli virheellisesti None; ".format(child_node_type, identifier))
 
         elif child_node_type in ['TN_PLUS', 'TN_MINUS', 'TN_DIV', 'TN_MULT']:
             status = eval_node(node.child_atom, semdata)
@@ -152,17 +155,10 @@ def eval_atom(node, semdata):
                 node.value = node.value * -1
 
 
-def eval_program_body(node, semdata):
-    for i in node.children_defs:
-        status = eval_node(i, semdata)
-        if status is not None:
-            return status
-
-
 def eval_vardef_varID(node, semdata):
-    """
-    Child simple_expression can be:
-    Child simple_expression can be: atom, PLUS, MINUS, DIV, MULT
+    """ Evaluate variable definition node.
+    Child simple_expression can be: and atom tree node
+    or PLUS, MINUS, DIV or MULT operation.
     :param node:
     :param semdata:
     :return:
@@ -173,46 +169,64 @@ def eval_vardef_varID(node, semdata):
         child_node_type = node.child_expression.nodetype
 
         if child_node_type in ['TN_atom', 'TN_PLUS', 'TN_MINUS', 'TN_MULT', 'TN_DIV']:
-            status = eval_funcs[child_node_type](node.child_expression, semdata)  # Evaluate variable expression
+            status = eval_funcs[child_node_type](node.child_expression, semdata)
             if status is not None:
                 return status
             symtbl[node.value].set_value(node.child_expression.value)
 
 
-def eval_vardef_constID(node, semdata):
-    pass
+def eval_return(node, semdata):
+    """Evaluate return tree node"""
+    if node.value in ['=', '!=']:
+        status = eval_node(node.child_expression, semdata)
+        if status is not None:
+            return status
+        semdata.stack[0] = node.child_expression.value
+        print("Program result: ", semdata.stack[0], sep="")
+    else:
+        return "Impossible return statement!"
 
 
-def eval_vardef_tupleID(node, semdata):
-    pass
+def eval_children(node, semdata):
+    """Evaluate node's children statements"""
 
-
-def eval_vardef_pipe(node, semdata):
-    pass
+    for i in node.children_stmts:
+        status = eval_node(i, semdata)
+        if status is not None:
+            return status
 
 
 # Store function pointers to node evaluation functions:
-eval_funcs = {'TN_program': eval_program,
-              'TN_definitions': eval_program_body,
+eval_funcs = {'TN_program': eval_children,
+              'TN_definitions': eval_children,
               'TN_vardef_varID': eval_vardef_varID,
-              'TN_vardef_constID': eval_vardef_constID,
-              'TN_vardef_tupleID': eval_vardef_tupleID,
-              'TN_vardef_pipe': eval_vardef_pipe,
               'TN_return_value_stmt': eval_return,
               'TN_PLUS': eval_plus,
+              'TN_MINUS': eval_minus,
               'TN_MULT': eval_mult,
               'TN_DIV': eval_div,
               'TN_atom': eval_atom}
 
 
 def eval_node(node, semdata):
-    nodetype = node.nodetype
+    node_type = node.nodetype
 
     # Evaluate current node:
-    if nodetype in eval_funcs.keys():
-        status = eval_funcs[nodetype](node, semdata)
+    if node_type in eval_funcs.keys():
+        status = eval_funcs[node_type](node, semdata)
         if status is not None:
             return status
+
+
+def run_program(tree, semdata):
+    """ Starting point to evaluating the syntax tree.
+    Effectively, runs the program.
+    :param tree: Syntax tree
+    :param semdata: Semantic data, containing a symbol table.
+    :return: None if all goes well, error message otherwise.
+    """
+    semdata.stack = [None]
+    return eval_node(tree, semdata)
 
 
 parser = syntax_tree_generation.parser
@@ -238,9 +252,10 @@ if __name__ == "__main__":
 
         semdata = SemData()
         semdata.in_function = None
+        print("Checking sematics...")
         semantics_check.semantic_checks(ast_tree, semdata)
         tree_print.treeprint(ast_tree)
-        print("Semantics ok. Running the program...\n")
+        print("Semantics ok. Running the program...")
 
         status = run_program(ast_tree, semdata)
         if status is not None:

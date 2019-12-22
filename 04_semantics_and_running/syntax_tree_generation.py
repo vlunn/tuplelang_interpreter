@@ -20,6 +20,7 @@ class TreeNode:
         else:
             return "TreeNode object of type {}".format(self.nodetype)
 
+
 def p_program_simplest(p):
     '''program : return_value DOT'''
     p[0] = TreeNode("TN_program")
@@ -41,25 +42,25 @@ def p_program_2(p):
 def p_func_or_var_def_v(p):
     '''func_or_var_def : var_def'''
     p[0] = TreeNode("TN_definitions", line=p.lineno)
-    p[0].children_defs = [p[1]]
+    p[0].children_stmts = [p[1]]
 
 
 def p_func_or_var_def_f(p):
     '''func_or_var_def : function_definition'''
     p[0] = TreeNode("TN_definitions")
-    p[0].children_defs = [p[1]]
+    p[0].children_stmts = [p[1]]
 
 
 def p_func_or_var_def_and_var_def(p):
     '''func_or_var_def : func_or_var_def var_def'''
     p[0] = p[1]
-    p[1].children_defs.append(p[2])
+    p[1].children_stmts.append(p[2])
 
 
 def p_func_or_var_def_func_def(p):
     '''func_or_var_def : func_or_var_def function_definition'''
     p[0] = p[1]
-    p[1].children_defs.append(p[2])
+    p[1].children_stmts.append(p[2])
 
 
 def p_function_definition_argless_bodyless(p):
