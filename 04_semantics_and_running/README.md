@@ -67,9 +67,9 @@
        * Note: Program also accepts string variables, even thought they 
          have little use; they can be catenated ":D".  
          
-    3. Tuple variables work and normal integer variables can be utilized
-       in tuple variable definitions as long as the program syntax allows
-       it. Example operations:
+    3. First part of tuple variables work and normal integer variables 
+       can be utilized in tuple variable definitions as long as the program
+       syntax allows it. Example operations:
        
           <varname> <- [1,2,3].
           <negseq> <- [1,-2].     // negative elements     
