@@ -16,19 +16,29 @@
 
 **1. Implemented semantic checks**
     
-    1. TODO: X
-    
-        TODO: explanation
+    1. Globally unique variable and function identifiers
     
 **2. Implementation level**
     
-    TODO: explain how it works
+    1. Support for same nodetype sum, multiplication and division:
     
+       operation    |  E.g.      | result
+       -----------------------------------
+       NUM + NUM    |  2 + 4     | 6
+                    |  -2 + 4    | 2
+       STR + STR    |  "Hello, " + "world" | "Hello, world"
+                    | -"A" + "B" | error msg, signed strings are illegal
+       NUM * NUM    |  2 * 4     | 8
+       NUM * NUM    | -2 * -4    | 8  (normal sign rules)
+       NUM / NUM    |  4 / 2     | 2
+                    |  4 / 0     | error msg, zero-division is illegal
+                    |  3 / 2     | 1 (floor from decimal representation)
+       NUM*NUM/NUM  |  4*3/2     | 4 (evaluation from right to left!)
+       
 **3. Implemented own things**
 
-    1. TODO: X
-    
-        TODO: explanation
+    1. Line numbers in error messages about redefined identifiers.
+    2. toString for SymbolData objects
 
 **6. What did you think of this assignment? What was difficult? What was easy? Did you learn anything useful?**
 
