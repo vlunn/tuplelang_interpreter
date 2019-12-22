@@ -37,24 +37,17 @@ def create_symbol_table(node, semdata):
                 else:
                     return "Undefined type of identifier definition: {}!".format(node.nodetype)
 
-# Define semantic check functions:
-
-def check_literals(node, semdata):
-    nodetype = node.nodetype
-    if nodetype == 'NUMBER_LITERAL':
-        if node.value > 10:
-            return "Literal "+str(node.value)+" too large!"
-
 
 def semantic_checks(tree, semdata):
-    '''run all semantic checks'''
+    '''Run semantic checks
+
+    Note: Some semantic checks are run during interpretation,
+    since e.g. variable value expressions need to be evaluated
+    before the values can be checked.
+    '''
+
+    # "Data collection phase":
     visit_tree(tree, create_symbol_table, None, semdata)
-
-    for key in semdata.symtbl.keys():
-        print(key, ": ", semdata.symtbl[key])
-
-
-    visit_tree(tree, check_literals, None, semdata)
 
 
 parser = syntax_tree_generation.parser
